@@ -1,34 +1,79 @@
-(ns algos-ds-clj.fibonacci-numbers
-  (:require [algos-ds-clj.fibonacci-numbers :as fib]))
-
-(defn fibonacci-recursion [[prev-term :as previous-two]]
-  [(bigdec (reduce + previous-two)) (bigdec prev-term)])
-
-(def fibonacci-seed [1M 0M])
+(ns algos-ds-clj.fibonacci-numbers)
 
 (def fibonacci-numbers
-  (->> fibonacci-seed
-       (iterate fibonacci-recursion)
-       (map first)))
+  (->> [0M 1M]
+       (iterate (fn [[pre-prev prev]]
+                  (->> [prev (+ prev pre-prev)]
+                       (map bigdec))))))
 
-(def sum-fibonacci-numbers
-  "F_n+2 - 1 = Sum(F_m) m=0 -> m=n-2"
+(defn modular-fibonacci-numbers
+  "Fibonacci seq is periodic in modular arithmetic. The period is not
+   easy to calculate but can be found when the pattern ... 0 1 ...
+   repeats"
+  [equiv]
+  (->> [1 1 1]
+       (iterate (fn [[pre-prev prev iteration]]
+                  [prev (-> prev (+ pre-prev) (mod equiv)) (inc iteration)]))
+       (take-while #(-> (= 0 (first %))
+                        (and (= 1 (second %)))
+                        not))
+       (cons [0 1 0])))
+
+(defn modular-fibonacci-index [index equiv]
+  (->> (modular-fibonacci-numbers equiv)
+       count
+       (mod index)))
+
+(defn fibonacci [n]
   (->> fibonacci-numbers
-       (drop 2)
-       (map dec)))
+       (drop n)
+       ffirst))
 
-(def sum-fibonacci-squares-numbers
-  "F_n * F_n-1 = Sum(F_m^2) m=0 -> m = n-1"
-  (->> fibonacci-seed
-       (iterate fibonacci-recursion)
-       (drop 1)
-       (map (partial reduce *))))
+(defn naive-fibonacci-sum [n]
+  (->> fibonacci-numbers
+       (take (inc n))
+       (map first)
+       (reduce +)))
 
-(defn nth-fibonacci-seq [fib-seq n]
-  (->> fib-seq
-       (take n)
-       last))
+(defn fibonacci-sum [n]
+  (-> n (+ 2) fibonacci dec))
 
-(def nth-fibonacci (partial nth-fibonacci-seq fibonacci-numbers))
-(def nth-fibonacci-sum (partial nth-fibonacci-seq sum-fibonacci-numbers))
-(def nth-fibonacci-square-sum (partial nth-fibonacci-seq sum-fibonacci-squares-numbers))
+(defn naive-fibonacci-square-sum [n]
+  (->> fibonacci-numbers
+       (take (inc n))
+       (map (comp #(* % %) first))
+       (reduce +)))
+
+(defn square-fibonacci-sum [n]
+  (->> fibonacci-numbers
+       (drop n)
+       first
+       (reduce *)))
+
+(defn modular-fibonacci [n m]
+  (let [m-index (modular-fibonacci-index n m)]
+    (->> (modular-fibonacci-numbers m)
+         (filter #(= (nth % 2) m-index))
+         ffirst)))
+
+(defn to-mod-num [n m]
+  (if (<= m n)
+    (mod n m)
+    (cond-> n (< n 0) (+ m))))
+
+(defn modular-fibonacci-sum [n m]
+  (-> n
+      (+ 2)
+      (modular-fibonacci m)
+      dec
+      (to-mod-num m)))
+
+(defn modular-square-fibonacci-sum [n m]
+  (let [m-index (modular-fibonacci-index n m)
+        raw-mod (->> (modular-fibonacci-numbers m)
+                     (filter #(= (nth % 2) m-index))
+                     first
+                     (take 2)
+                     (reduce *))]
+    (to-mod-num raw-mod m)))
+
