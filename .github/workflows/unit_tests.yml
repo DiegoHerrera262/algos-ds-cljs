@@ -1,0 +1,37 @@
+name: unit-tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # Use this version in local environment
+    - name: Set up java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+
+    # Use this versions in local environment
+    - name: Install clojure tools
+      uses: DeLaGuardo/setup-clojure@13.2
+      with:
+        cli: 1.11.1.1347
+        lein: 2.11.2
+      
+    - name: Install dependencies
+      run: lein deps
+      
+    - name: Run tests
+      run: lein test
