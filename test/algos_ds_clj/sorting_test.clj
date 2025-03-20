@@ -28,6 +28,28 @@
      (testing "When array is empty"
        (is (= '() (~sort-fn []))))))
 
+(deftest insert-in-sorted-test
+  (testing "When to insert is not in array"
+    (is (= [1 2 3 4 5 6 7 8] (sorting/insert-in-sorted [1 2 3 4 5 7 8] 6))))
+  (testing "When to insert is in array"
+    (is (= [1 2 3 3 4] (sorting/insert-in-sorted [1 2 3 4] 3))))
+  (testing "When to insert should be in first position"
+    (is (= [0 1 2 3] (sorting/insert-in-sorted [1 2 3] 0))))
+  (testing "When to insert should be in last position"
+    (is (= [0 1 2 3] (sorting/insert-in-sorted [0 1 2] 3)))))
+
+(deftest merge-subarrays-test
+  (testing "When all elements are different"
+    (is (= [1 2 3 4 5 6] (sorting/merge-subarrays [2 4 6] [1 3 5]))))
+  (testing "When there are repeated elements"
+    (is (= [1 1 2 2 3 3 4 4] (sorting/merge-subarrays [1 2 3] [1 2 3 4 4]))))
+  (testing "When left is empty"
+    (is (= [1 2 3] (sorting/merge-subarrays [] [1 2 3]))))
+  (testing "When right is empty"
+    (is (= [1 2 3] (sorting/merge-subarrays [1 2 3] []))))
+  (testing "When both are empty"
+    (is (= [] (sorting/merge-subarrays [] [])))))
+
 (deftest insertion-sort-test
   (sort-test sorting/insertion-sort))
 
