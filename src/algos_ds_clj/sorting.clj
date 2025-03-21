@@ -4,10 +4,9 @@
   (let [{:keys [inserted? new-sorted]} (reduce
                                         (fn [{:keys [inserted? new-sorted]} element]
                                           {:inserted? (or inserted? (<= to-insert element))
-                                           :new-sorted (cond
-                                                         (< element to-insert) (conj new-sorted element)
-                                                         (and (not inserted?) (<= to-insert element)) (conj new-sorted to-insert element)
-                                                         :else (conj new-sorted element))})
+                                           :new-sorted (if (and (not inserted?) (<= to-insert element))
+                                                         (conj new-sorted to-insert element)
+                                                         (conj new-sorted element))})
                                         {:inserted? false :new-sorted []}
                                         sorted)]
     (if inserted? new-sorted (conj new-sorted to-insert))))
@@ -33,12 +32,9 @@
 
 (defn merge-sort [to-sort]
   (let [el-count (count to-sort)]
-    (cond
-      (empty? to-sort) to-sort
-      (= el-count 1) to-sort
-      :else
+    (if (<= el-count 1)
+      to-sort
       (let [[left-array right-array] (split-at (-> el-count (/ 2) int) to-sort)]
         (merge-subarrays
          (merge-sort left-array)
          (merge-sort right-array))))))
-
