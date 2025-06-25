@@ -1,0 +1,1 @@
+{:lint-as {algos-ds-clj.core/memo-rec-fn clojure.core/defn}}
