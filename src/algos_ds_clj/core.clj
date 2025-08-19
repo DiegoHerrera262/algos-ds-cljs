@@ -1,6 +1,18 @@
 (ns algos-ds-clj.core
   (:gen-class))
 
+(defn take-while+
+  [pred coll]
+  (lazy-seq
+   (when-let [[f & r] (seq coll)]
+     (if (pred f)
+       (cons f (take-while+ pred r))
+       [f]))))
+
+(defn find-first
+  [pred coll]
+  (some #(when (pred %) %) coll))
+
 ;; NOTE Taken from stackoveflow answer by miner49r. Not upvoted but works!
 ;; https://stackoverflow.com/questions/27445876/is-there-a-simpler-way-to-memoize-a-recursive-let-fn
 (defmacro memo-rec-fn
