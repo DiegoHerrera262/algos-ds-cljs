@@ -33,3 +33,7 @@
            (let [ret# (f# mr# ~@args)]
              (swap! mem# assoc ~akey ret#)
              ret#))))))
+
+(defn tap [x]
+  (println x)
+  x)

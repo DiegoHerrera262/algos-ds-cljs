@@ -1,65 +1,44 @@
 (ns algos-ds-clj.josephus)
 
-(defn initial-state [n k]
-  {:total-people n
-   :skip k
-   :killed-people #{(dec k)}
-   :last-killed (dec k)
-   :total-killed 1})
+(defn- modular-index [index n] (inc (mod (dec index) n)))
 
-(defn killing-rule [{:keys [total-people skip killed-people last-killed total-killed] :as current-state}]
-  (let [next-to-kill (->> (range)
-                          (drop-while #(<= % last-killed))
-                          (map #(mod % total-people))
-                          (remove killed-people)
-                          (take skip)
-                          last)]
-    (assoc current-state
-           :killed-people (->> killed-people (cons next-to-kill) set)
-           :last-killed next-to-kill
-           :total-killed (inc total-killed))))
+(defn kill-at-index
+  [warriors index n]
+  (let [kill-index (modular-index index n)]
+    (into (subvec warriors 0 (dec kill-index))
+          (subvec warriors kill-index))))
+
+(defn next-to-kill [index n k] (modular-index (+ index (dec k)) n))
+
+(defn naive-josephus*
+  [warriors pointer n k]
+  (if (< 1 n)
+    (recur (kill-at-index warriors pointer n)
+           (next-to-kill pointer (dec n) k)
+           (dec n)
+           k)
+    warriors))
 
 (defn naive-josephus
-  "Naive implementation of josephus problem solution. Intended only for direct
-   exploring. Works only for n > k"
   [n k]
-  (let [init-state (initial-state n k)]
-    (->> init-state
-         (iterate killing-rule)
-         (drop-while #(< (:total-killed %) n))
-         first
-         :last-killed)))
+  (-> (range 1 (inc n))
+      vec
+      (naive-josephus* (modular-index k n) n k)
+      first))
+
+(defn solution-mapping [idx m] (+ idx (quot (dec idx) (dec m))))
+
+(defn reindexing [idx l m] (modular-index (- idx (mod l m)) (- l (quot l m))))
 
 (defn josephus
-  "Josephus sequence is such that after applying each death, the problem is equivalent
-   to a smaller one (n-1), by reindexing so that the first man is the one after the last
-   killed. This can be seen by doing the simulation on paper"
+  "Uses stack efficient base case iteration n < k, which supports effcient logarithmic
+   size reduction when n >> k."
   [n k]
-  (->> [0 1]
-       (iterate (fn [[prev iter]]
-                  (let [next-iter (inc iter)]
-                    [(-> prev (+ k) (mod next-iter)) next-iter])))
-       (drop (dec n))
-       ffirst))
-
-;; leave this comment here as evidence of the
-;; solution process :)
-(comment
-  (def sample (initial-state 12 3))
-  (def sample (killing-rule sample))
-  (killing-rule sample)
-  (naive-josephus 11 19)
-  (josephus 17 8)
-
-  (->> (range 2 17)
-       (map (fn [n]
-              {:n n
-               :josephus (naive-josephus n 2)})))
-
-  (into (sorted-map-by <)
-        (-> (->> (range 3 20)
-                 (map (fn [n]
-                        {:n n
-                         :josephus (naive-josephus n 4)}))
-                 (group-by :josephus))
-            (update-vals #(map :n %)))))
+  (cond
+    (= k 1)  n
+    (= n 1)  1
+    (<= n k) (reduce (fn [j n'] (modular-index (+ j k) n')) 1 (range 2 (inc n)))
+    (< k n)  (-> (- n (quot n k))
+                 (josephus  k)
+                 (reindexing n k)
+                 (solution-mapping k))))
